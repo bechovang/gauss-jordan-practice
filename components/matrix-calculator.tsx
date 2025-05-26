@@ -501,25 +501,47 @@ export default function MatrixCalculator() {
   }
 
   const getMatrixCellSize = () => {
+    const isClient = typeof window !== 'undefined';
+    const screenWidth = isClient ? window.innerWidth : 1024; 
+
     if (symbolicMode) {
-      // Dynamic sizing based on content length
       const maxLength = Math.max(
         ...getCurrentMatrix()
           .flat()
           .map((cell) => cell.length),
-      )
-      if (maxLength <= 3) return "w-20 h-16"
-      if (maxLength <= 6) return "w-28 h-16"
-      if (maxLength <= 10) return "w-36 h-16"
-      return "w-44 h-20"
+          3 // ensure a minimum base for calculation, was 5
+      );
+      if (screenWidth < 480) { // Stricter breakpoint for smallest mobiles, was 640
+        if (maxLength <= 2) return "w-10 h-8"; // Was w-12 h-10
+        if (maxLength <= 4) return "w-12 h-8"; // Was w-16 h-10
+        if (maxLength <= 7) return "w-14 h-10"; // Was w-20 h-12
+        return "w-16 h-10"; // Was w-24 h-12
+      } else if (screenWidth < 768) { // Medium screens (tablets), was 640 for sm next breakpoint
+        if (maxLength <= 3) return "w-14 h-12"; // Was sm:w-16 sm:h-12
+        if (maxLength <= 6) return "w-16 h-12"; // Was sm:w-20 sm:h-12
+        if (maxLength <= 10) return "w-20 h-14"; // Was sm:w-28 sm:h-14
+        return "w-24 h-14"; // Was sm:w-32 sm:h-14
+      } else { // Larger screens
+        if (maxLength <= 3) return "w-20 h-16";
+        if (maxLength <= 6) return "w-28 h-16";
+        if (maxLength <= 10) return "w-36 h-16";
+        return "w-44 h-20";
+      }
     }
-    return "w-16 h-16"
+    // Numeric mode
+    if (screenWidth < 480) { // Stricter breakpoint
+      return "w-10 h-10"; // Was w-12 h-12
+    } else if (screenWidth < 768) {
+      return "w-12 h-12"; // Was sm:w-14 sm:h-14
+    } else {
+      return "w-16 h-16";
+    }
   }
 
   return (
     <div className="space-y-8">
       {/* Enhanced Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
         <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
           <Label className="text-blue-700 dark:text-blue-300 font-semibold">Số hàng</Label>
           <Select value={rows.toString()} onValueChange={(value) => setRows(Number.parseInt(value))}>
@@ -527,7 +549,7 @@ export default function MatrixCalculator() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[2, 3, 4, 5].map((num) => (
+              {[1, 2, 3, 4, 5].map((num) => (
                 <SelectItem key={num} value={num.toString()}>
                   {num} hàng
                 </SelectItem>
@@ -543,7 +565,7 @@ export default function MatrixCalculator() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[3, 4, 5, 6].map((num) => (
+              {[1, 2, 3, 4, 5].map((num) => (
                 <SelectItem key={num} value={num.toString()}>
                   {num} cột
                 </SelectItem>
@@ -594,7 +616,7 @@ export default function MatrixCalculator() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3">
         <Button
           onClick={gaussJordanElimination}
           disabled={steps.length > 0}
@@ -631,7 +653,7 @@ export default function MatrixCalculator() {
           <RotateCcw className="w-4 h-4 mr-2" />
           Reset
         </Button>
-        <div className="flex items-center gap-3 ml-auto">
+        <div className="flex items-center gap-3 mt-2 sm:mt-0 sm:ml-auto">
           <Switch checked={showFractions} onCheckedChange={setShowFractions} />
           <Label className="font-medium">Hiển thị phân số</Label>
         </div>
@@ -639,29 +661,29 @@ export default function MatrixCalculator() {
 
       {/* Enhanced Matrix Display */}
       <Card className="overflow-hidden shadow-2xl border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
-        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+        <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-2xl font-bold flex items-center gap-2">
-              {symbolicMode ? <Variable className="w-6 h-6" /> : <Calculator className="w-6 h-6" />}
+            <CardTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+              {symbolicMode ? <Variable className="w-5 h-5 sm:w-6 sm:h-6" /> : <Calculator className="w-5 h-5 sm:w-6 sm:h-6" />}
               Ma trận {symbolicMode ? "có tham số" : "số"}
             </CardTitle>
             {steps.length > 0 && (
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-lg px-4 py-2">
+              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-sm sm:text-lg px-2 py-1 sm:px-4 sm:py-2">
                 Bước {currentStep + 1}/{steps.length}
               </Badge>
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-8">
-          <div className="space-y-6">
+        <CardContent className="p-1 xxs:p-2 sm:p-4 md:p-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Matrix Grid */}
             <div className="flex justify-center">
-              <div className="relative">
+              <div className="relative overflow-x-auto">
                 {/* Matrix Brackets */}
-                <div className="absolute -left-4 top-0 bottom-0 w-3 border-l-4 border-t-4 border-b-4 border-gray-400 dark:border-gray-500 rounded-l-lg"></div>
-                <div className="absolute -right-4 top-0 bottom-0 w-3 border-r-4 border-t-4 border-b-4 border-gray-400 dark:border-gray-500 rounded-r-lg"></div>
+                <div className="absolute -left-1.5 top-0 bottom-0 w-1 border-l-2 border-t-2 border-b-2 border-gray-400 dark:border-gray-500 rounded-l-md sm:-left-2 sm:w-1.5 sm:border-l-2 sm:border-t-2 sm:border-b-2 sm:rounded-l-lg"></div>
+                <div className="absolute -right-1.5 top-0 bottom-0 w-1 border-r-2 border-t-2 border-b-2 border-gray-400 dark:border-gray-500 rounded-r-md sm:-right-2 sm:w-1.5 sm:border-r-2 sm:border-t-2 sm:border-b-2 sm:rounded-r-lg"></div>
 
-                <div className="grid gap-2 p-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+                <div className="grid gap-0.5 p-0.5 sm:gap-1 sm:p-1 md:gap-2 md:p-2 min-w-max" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
                   {getCurrentMatrix().map((row, rowIndex) =>
                     row.map((cell, colIndex) => {
                       let displayValue = cell;
@@ -692,32 +714,32 @@ export default function MatrixCalculator() {
                               }
                             }}
                             disabled={steps.length > 0}
-                            placeholder={symbolicMode ? "a, 2b, x+1..." : "0"}
+                            placeholder={symbolicMode ? "a,b.." : "0"}
                             className={`
                               ${getMatrixCellSize()} 
                               text-center font-mono font-semibold
                               ${getCellClass(rowIndex, colIndex)}
-                              focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                              focus:ring-1 focus:ring-blue-500 focus:border-transparent
                               disabled:opacity-100 disabled:cursor-default
-                              ${(steps[currentStep]?.isSymbolicStep ?? symbolicMode) ? "text-xs leading-tight px-1 break-all" : "text-lg"}
+                              ${(steps[currentStep]?.isSymbolicStep ?? symbolicMode) ? "text-[10px] xxs:text-xs sm:text-sm leading-tight px-0.5 break-all" : "text-xs xxs:text-sm sm:text-base"}
                               resize-none overflow-hidden
                             `}
                             style={{
                               wordBreak: "break-all",
                               overflowWrap: "break-word",
                               whiteSpace: "normal",
-                              lineHeight: (steps[currentStep]?.isSymbolicStep ?? symbolicMode) ? "1.2" : "1.5",
+                              lineHeight: (steps[currentStep]?.isSymbolicStep ?? symbolicMode) ? "1.1" : "1.3",
                             }}
                           />
                           {/* Tooltip for long expressions */}
-                          {(steps[currentStep]?.isSymbolicStep ?? symbolicMode) && displayValue.length > 8 && (
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                          {(steps[currentStep]?.isSymbolicStep ?? symbolicMode) && displayValue.length > 4 && (
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-1 py-0.5 bg-gray-800 text-white text-[10px] xxs:text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
                               {displayValue}
                             </div>
                           )}
                           {/* Separator line before last column */}
                           {colIndex === cols - 2 && (
-                            <div className="absolute -right-1 top-1/2 transform -translate-y-1/2 w-0.5 h-8 bg-gray-400 dark:bg-gray-500"></div>
+                            <div className="absolute -right-px top-1/2 transform -translate-y-1/2 w-px h-5 sm:h-6 bg-gray-300 dark:bg-gray-600"></div>
                           )}
                         </div>
                       );
@@ -732,61 +754,61 @@ export default function MatrixCalculator() {
                 <Separator className="bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600" />
 
                 {/* Enhanced Controls */}
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-2 sm:gap-4">
                   <Button
                     size="lg"
                     variant="outline"
                     onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
                     disabled={currentStep === 0}
-                    className="h-12 px-6"
+                    className="h-10 sm:h-12 px-3 sm:px-6"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                   <Button
                     size="lg"
                     onClick={() => setIsPlaying(!isPlaying)}
                     disabled={currentStep >= steps.length - 1}
-                    className="h-12 px-8 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                    className="h-10 sm:h-12 px-4 sm:px-8 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
                   >
-                    {isPlaying ? <Pause className="w-5 h-5 mr-2" /> : <Play className="w-5 h-5 mr-2" />}
-                    {isPlaying ? "Tạm dừng" : "Phát"}
+                    {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />}
+                    {isPlaying ? "Dừng" : "Phát"}
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
                     onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
                     disabled={currentStep >= steps.length - 1}
-                    className="h-12 px-6"
+                    className="h-10 sm:h-12 px-3 sm:px-6"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
 
                 {/* Step Explanation */}
                 <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-700">
-                  <CardContent className="p-6">
-                    <p className="text-lg font-medium text-center text-gray-800 dark:text-gray-200 step-explanation">
+                  <CardContent className="p-3 sm:p-6">
+                    <p className="text-sm sm:text-lg font-medium text-center text-gray-800 dark:text-gray-200 step-explanation">
                       {steps[currentStep]?.operation}
                     </p>
                   </CardContent>
                 </Card>
 
                 {/* Legend */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <div className="w-6 h-6 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 border-2 border-blue-400 rounded"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 border-2 border-blue-400 rounded"></div>
                     <span className="font-medium">Pivot</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <div className="w-6 h-6 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-800/50 border-2 border-green-300 rounded"></div>
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/50 dark:to-green-800/50 border-2 border-green-300 rounded"></div>
                     <span className="font-medium">Hàng pivot</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                    <div className="w-6 h-6 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/50 dark:to-yellow-800/50 border-2 border-yellow-300 rounded"></div>
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                    <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-900/50 dark:to-yellow-800/50 border-2 border-yellow-300 rounded"></div>
                     <span className="font-medium">Hàng đích</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                    <div className="w-6 h-6 bg-gradient-to-b from-purple-50 to-purple-100 dark:from-purple-900/50 dark:to-purple-800/50 border-2 border-purple-300 rounded"></div>
+                  <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="w-4 h-4 sm:w-6 sm:h-6 bg-gradient-to-b from-purple-50 to-purple-100 dark:from-purple-900/50 dark:to-purple-800/50 border-2 border-purple-300 rounded"></div>
                     <span className="font-medium">Cột pivot</span>
                   </div>
                 </div>
